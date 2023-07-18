@@ -1,0 +1,50 @@
+{
+  "name": "hyperliquid-ts-sdk",
+  "version": "0.0.1",
+  "description": "Typescript SDK for Hyperliquid",
+  "repository": "https://github.com/elevatordown/hyperliquid-ts-sdk",
+  "author": {
+    "name": "ed"
+  },
+  "sideEffects": false,
+  "main": "./dist/cjs/src/index.js",
+  "types": "./dist/types/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist && yarn build:node && yarn build:types",
+    "build:node": " tsc -p tsconfig.cjs.json --noEmit false",
+    "build:types": "tsc -p tsconfig.types.json --noEmit false",
+    "format": "prettier --check ./src",
+    "lint": "eslint ./src --ext ts --ext tsx --ext js --quiet",
+    "typecheck": "tsc --noEmit --pretty",
+    "prepublishOnly": "yarn validate && yarn build",
+    "validate": "yarn lint && yarn format"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "ethers": "^6.6.4",
+    "ethers-utils": "^2.1.11",
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.1",
+    "@types/node": "^20.4.2",
+    "@types/websocket": "^1.0.5",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.44.0",
+    "eslint-config-prettier": "^8.8.0",
+    "prettier": "^3.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "all",
+    "tabWidth": 2,
+    "semi": true
+  },
+  "license": "MIT"
+}
