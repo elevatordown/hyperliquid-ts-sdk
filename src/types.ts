@@ -2,7 +2,7 @@ export type Side = 'A' | 'B';
 
 type Position = {
   coin: 'BTC';
-  entryPx: null;
+  entryPx: string;
   leverage: { type: 'cross'; value: number };
   liquidationPx: null;
   marginUsed: string;
@@ -36,7 +36,7 @@ export type UserState = {
 };
 
 export type OpenOrder = {
-  coin: 'DYDX';
+  coin: string;
   limitPx: string;
   oid: number;
   side: 'A';

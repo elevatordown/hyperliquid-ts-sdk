@@ -158,7 +158,7 @@ export async function signL1Action(
 
 export function Tl(e: string): { r: string; s: string; v: number } {
   if (130 !== (e = e.slice(2)).length)
-    throw new Error('bad sig length: '.concat(e.length));
+    throw new Error('bad sig length: ' + e.length);
   const t = e.slice(-2);
   if ('1c' !== t && '1b' !== t && '00' !== t && '01' !== t)
     throw new Error('bad sig v '.concat(t));
