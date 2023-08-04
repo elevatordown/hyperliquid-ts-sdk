@@ -8,6 +8,7 @@ import { Exchange, Info, MAINNET_API_URL } from '../src';
 const secretKey: string = process.env.SECRET_KEY || '';
 const info = new Info(MAINNET_API_URL);
 const wallet = new ethers.Wallet(secretKey);
+const vault: string | undefined = process.env.VAULT;
 
 export function parsePrice(
   price: string,
@@ -66,14 +67,16 @@ export function five(price: number): number {
 }
 
 async function parseCommand(input: string[]): Promise<void> {
-  const exchange = await Exchange.create(wallet, MAINNET_API_URL);
+  const exchange = await Exchange.create(wallet, MAINNET_API_URL, vault);
 
   // exammples
   // - close eth
   if (input[0] === 'close') {
     const [action, currency] = input;
     const allMids = await info.allMids();
-    const state = await info.userState(wallet.address);
+    const state = await info.userState(
+      vault != undefined ? vault : wallet.address,
+    );
     const p = state.assetPositions.filter(
       (p) => p.position.coin === currency.toLocaleUpperCase(),
     )[0];
@@ -113,7 +116,9 @@ async function parseCommand(input: string[]): Promise<void> {
     } else {
       [action, side, currency] = input;
     }
-    let oos = await info.openOrders(wallet.address);
+    let oos = await info.openOrders(
+      vault != undefined ? vault : wallet.address,
+    );
     if (currency) {
       oos = oos.filter((oo) => oo.coin == currency);
     }
@@ -128,8 +133,12 @@ async function parseCommand(input: string[]): Promise<void> {
     }
   } else if (input[0].toLowerCase() === 'autotp') {
     const allMids = await info.allMids();
-    const state = await info.userState(wallet.address);
-    let oos = await info.openOrders(wallet.address);
+    const state = await info.userState(
+      vault != undefined ? vault : wallet.address,
+    );
+    let oos = await info.openOrders(
+      vault != undefined ? vault : wallet.address,
+    );
     await Promise.all(
       state.assetPositions
         .filter((ap) => parseFloat(ap.position.szi) != 0)
