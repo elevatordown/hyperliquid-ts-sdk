@@ -8,13 +8,15 @@
   },
   "sideEffects": false,
   "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
   "types": "./dist/types/src/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && yarn build:node && yarn build:types",
+    "build": "rimraf dist && yarn build:browser && yarn build:node && yarn build:types",
     "build:node": " tsc -p tsconfig.cjs.json --noEmit false",
+    "build:browser": "tsc -p tsconfig.esm.json --noEmit false",
     "build:types": "tsc -p tsconfig.types.json --noEmit false",
     "format": "prettier --check ./src",
     "lint": "eslint ./src --ext ts --ext tsx --ext js --quiet",

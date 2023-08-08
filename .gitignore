@@ -2,11 +2,9 @@
 /node_modules
 
 # Build output directories
-/dist
 /build
 
-# JavaScript and source map files
-*.js
+# JavaScript source map files
 *.js.map
 
 # Operating system-specific files
