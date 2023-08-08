@@ -3,7 +3,12 @@
 import commander from 'commander';
 import { ethers } from 'ethers';
 import lodash from 'lodash';
-import { Exchange, Info, MAINNET_API_URL } from '../src';
+import {
+  Exchange,
+  Info,
+  MAINNET_API_URL,
+  computePrice as computeImpactPrice,
+} from '../src';
 
 const secretKey: string = process.env.SECRET_KEY || '';
 const info = new Info(MAINNET_API_URL);
@@ -70,8 +75,72 @@ async function parseCommand(input: string[]): Promise<void> {
   const exchange = await Exchange.create(wallet, MAINNET_API_URL, vault);
 
   // examples
+  // - pair
+  if (input[0] === 'pair') {
+    let [action, pair, amount] = input;
+
+    let parsedQuoteAmount;
+    if (amount.indexOf('$') > -1) {
+      parsedQuoteAmount = parseFloat(amount.slice(0, amount.length - 1)) / 2;
+    } else {
+      throw new Error(`Amount should be in $!`);
+    }
+
+    const meta = await info.meta();
+
+    const base = pair.split('/')[0];
+    const quote = pair.split('/')[1];
+    const l2s = await Promise.all([
+      info.l2Snapshot(base),
+      info.l2Snapshot(quote),
+    ]);
+
+    const bPx = computeImpactPrice(
+      l2s.filter((r) => r.coin == base)[0],
+      'long',
+      parsedQuoteAmount,
+    );
+    const bsz = parsedQuoteAmount / bPx;
+    const qPx = computeImpactPrice(
+      l2s.filter((r) => r.coin == quote)[0],
+      'short',
+      parsedQuoteAmount,
+    );
+    const qsz = parsedQuoteAmount / bPx;
+
+    console.log(`${pair} current px ${bPx / qPx} including slippage`);
+
+    const r = await exchange.bulkOrders([
+      {
+        coin: base,
+        isBuy: true,
+        sz: parseFloat(
+          bsz.toFixed(
+            meta.universe.filter((u) => u.name == base)[0].szDecimals,
+          ),
+        ),
+        limitPx: five(bPx),
+        orderType: { limit: { tif: 'Ioc' } },
+        reduceOnly: false,
+      },
+      {
+        coin: quote,
+        isBuy: false,
+        sz: parseFloat(
+          qsz.toFixed(
+            meta.universe.filter((u) => u.name == quote)[0].szDecimals,
+          ),
+        ),
+        limitPx: five(qPx),
+        orderType: { limit: { tif: 'Ioc' } },
+        reduceOnly: false,
+      },
+    ]);
+    console.log(JSON.stringify(r));
+  }
+  // examples
   // - withdraw 1
-  if (input[0] === 'transfer') {
+  else if (input[0] === 'transfer') {
     let [action, amount] = input;
     const r = await exchange.usdTransfer(amount);
     console.log(JSON.stringify(r));
