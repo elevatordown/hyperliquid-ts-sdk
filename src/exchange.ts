@@ -8,6 +8,7 @@ import {
   orderSpecPreprocessing,
   orderSpecToOrderWire,
   signL1Action,
+  signUsdTransferAction,
 } from './signing';
 import {
   ApiResponse,
@@ -63,6 +64,11 @@ export class Exchange extends API {
           type: 'order';
           grouping;
           orders: OrderWire[];
+        }
+      | {
+          type: 'usdTransfer';
+          chain;
+          payload;
         },
     signature: { r: string; s: string; v: number },
     nonce: number,
@@ -159,6 +165,29 @@ export class Exchange extends API {
           asset: this.coinToAsset[cancel.coin],
           oid: cancel.oid,
         })),
+      },
+      signature,
+      timestamp,
+    );
+  }
+
+  async usdTransfer(
+    amount: string,
+    destination = this.wallet.address,
+  ): Promise<any> {
+    const timestamp = getTimestampMs();
+    const payload = {
+      destination,
+      amount,
+      time: timestamp,
+    };
+    const signature = await signUsdTransferAction(this.wallet, payload);
+
+    return this._postAction(
+      {
+        type: 'usdTransfer',
+        chain: 'Arbitrum',
+        payload,
       },
       signature,
       timestamp,

@@ -156,6 +156,34 @@ export async function signL1Action(
   );
 }
 
+export async function signUsdTransferAction(
+  wallet: Wallet,
+  message: {
+    destination: string;
+    amount: string;
+    time: number;
+  },
+): Promise<{ r: string; s: string; v: number }> {
+  return Tl(
+    await wallet.signTypedData(
+      {
+        chainId: 42161,
+        name: 'Exchange',
+        verifyingContract: '0x0000000000000000000000000000000000000000',
+        version: '1',
+      },
+      {
+        UsdTransferSignPayload: [
+          { name: 'destination', type: 'string' },
+          { name: 'amount', type: 'string' },
+          { name: 'time', type: 'uint64' },
+        ],
+      },
+      message,
+    ),
+  );
+}
+
 export function Tl(e: string): { r: string; s: string; v: number } {
   if (130 !== (e = e.slice(2)).length)
     throw new Error('bad sig length: ' + e.length);

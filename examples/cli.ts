@@ -69,9 +69,16 @@ export function five(price: number): number {
 async function parseCommand(input: string[]): Promise<void> {
   const exchange = await Exchange.create(wallet, MAINNET_API_URL, vault);
 
-  // exammples
+  // examples
+  // - withdraw 1
+  if (input[0] === 'transfer') {
+    let [action, amount] = input;
+    const r = await exchange.usdTransfer(amount);
+    console.log(JSON.stringify(r));
+  }
+  // examples
   // - close eth
-  if (input[0] === 'close') {
+  else if (input[0] === 'close') {
     const [action, currency] = input;
     const allMids = await info.allMids();
     const state = await info.userState(
