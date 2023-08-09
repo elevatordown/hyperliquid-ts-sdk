@@ -15,6 +15,42 @@ const info = new Info(MAINNET_API_URL);
 const wallet = new ethers.Wallet(secretKey);
 const vault: string | undefined = process.env.VAULT;
 
+function fibonacci(n: number): number {
+  if (n <= 0) return 0;
+  if (n === 1) return 1;
+
+  let prev = 0;
+  let current = 1;
+
+  for (let i = 2; i <= n; i++) {
+    const temp = current;
+    current = prev + current;
+    prev = temp;
+  }
+
+  return Math.pow(current, 1 / 7.5);
+}
+
+function splitByFibonacciWeight(totalNumber: number, parts: number): number[] {
+  const weights: number[] = [];
+  let totalWeight = 0;
+
+  for (let i = 0; i < parts; i++) {
+    const weight = fibonacci(i);
+    weights.push(weight);
+    totalWeight += weight;
+  }
+
+  const amounts: number[] = [];
+
+  for (let i = 0; i < parts; i++) {
+    const amount = (weights[i] / totalWeight) * totalNumber;
+    amounts.push(amount);
+  }
+
+  return amounts;
+}
+
 export function parsePrice(
   price: string,
   currentMid: number,
@@ -319,23 +355,33 @@ async function parseCommand(input: string[]): Promise<void> {
     console.log(
       `Placing ${portions} ${action} orders between ${parsedLowerPrice} and ${parsedUpperPrice} for ${parsedAmount} ${currency}`,
     );
+
+    let szs = splitByFibonacciWeight(parsedAmount, parsedPortions);
+    if (action === 'buy') {
+      szs = szs.reverse();
+    }
+
     const r = await exchange.bulkOrders(
-      lodash.range(1, parsedPortions + 1).map((i) => {
-        return {
-          coin: currency,
-          isBuy: action === 'buy',
-          sz: parseFloat(
-            (parsedAmount / parsedPortions).toFixed(coinMeta.szDecimals),
-          ),
-          limitPx: five(
-            parsedLowerPrice +
-              (i * Math.abs(parsedUpperPrice - parsedLowerPrice)) /
-                parsedPortions,
-          ),
-          orderType: { limit: { tif: 'Gtc' } },
-          reduceOnly: false,
-        };
-      }),
+      lodash
+        .range(1, parsedPortions + 1)
+        .filter((i) => parseFloat(szs[i - 1].toFixed(coinMeta.szDecimals)) > 0)
+        .map((i) => {
+          return {
+            coin: currency,
+            isBuy: action === 'buy',
+            // sz: parseFloat(
+            //   (parsedAmount / parsedPortions).toFixed(coinMeta.szDecimals),
+            // ),
+            sz: parseFloat(szs[i - 1].toFixed(coinMeta.szDecimals)),
+            limitPx: five(
+              parsedLowerPrice +
+                (i * Math.abs(parsedUpperPrice - parsedLowerPrice)) /
+                  parsedPortions,
+            ),
+            orderType: { limit: { tif: 'Gtc' } },
+            reduceOnly: false,
+          };
+        }),
     );
     console.log(JSON.stringify(r));
   } else {
