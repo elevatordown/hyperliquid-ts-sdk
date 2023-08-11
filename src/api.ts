@@ -1,4 +1,6 @@
 import axios from 'axios';
+import http from 'http';
+import https from 'https';
 import {
   CandlesSnapshot,
   Fills,
@@ -12,11 +14,19 @@ import {
 import { WebsocketManager } from './websocketmanager';
 
 export class API {
-  constructor(public baseUrl: string) {}
+  httpAgent: http.Agent;
+  httpsAgent: https.Agent;
+  constructor(public baseUrl: string) {
+    this.httpAgent = new http.Agent({ keepAlive: true });
+    this.httpsAgent = new https.Agent({ keepAlive: true });
+  }
 
   public async post<T>(urlPath: string, payload = {}): Promise<T> {
     try {
-      const response = await axios.post(this.baseUrl + urlPath, payload);
+      const response = await axios.post(this.baseUrl + urlPath, payload, {
+        httpAgent: this.httpAgent,
+        httpsAgent: this.httpsAgent,
+      });
       return <T>response.data;
     } catch (error) {
       console.log(error);
