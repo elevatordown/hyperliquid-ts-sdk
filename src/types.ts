@@ -39,7 +39,9 @@ export type OpenOrder = {
   coin: string;
   limitPx: string;
   oid: number;
-  side: 'A';
+  origSz: string;
+  reduceOnly: boolean;
+  side: 'A' | 'B';
   sz: string;
   timestamp: number;
 };
@@ -55,7 +57,7 @@ type Fill = {
   hash: string;
   oid: number;
   px: string;
-  side: 'A';
+  side: 'A' | 'B';
   startPosition: string;
   sz: string;
   time: number;
@@ -240,4 +242,41 @@ export interface ApiResponse {
       statuses: ResponseStatus[];
     };
   };
+}
+
+export interface FollowerState {
+  allTimePnl: string;
+  daysFollowing: number;
+  lockupUntil: number;
+  pnl: string;
+  user: string;
+  vaultEntryTime: number;
+  vaultEquity: string;
+}
+
+export interface VaultDetails {
+  ageInDays: number;
+  allowDeposits: boolean;
+  apr: number;
+  description: string;
+  followerState: FollowerState;
+}
+
+export interface Contract {
+  ticker_id: string;
+  base_currency: string;
+  quote_currency: string;
+  last_price: string;
+  base_volume: string;
+  quote_volume: string;
+  product_type: string;
+  open_interest: string;
+  index_price: string;
+  index_name: string;
+  index_currency: string;
+  funding_rate: string;
+  next_funding_rate: string;
+  next_funding_rate_timestamp: string;
+  contract_type: string;
+  contract_price_currency: string;
 }

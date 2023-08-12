@@ -369,10 +369,10 @@ async function parseCommand(input: string[]): Promise<void> {
           return {
             coin: currency,
             isBuy: action === 'buy',
-            // sz: parseFloat(
-            //   (parsedAmount / parsedPortions).toFixed(coinMeta.szDecimals),
-            // ),
-            sz: parseFloat(szs[i - 1].toFixed(coinMeta.szDecimals)),
+            sz: parseFloat(
+              (parsedAmount / parsedPortions).toFixed(coinMeta.szDecimals),
+            ),
+            // sz: parseFloat(szs[i - 1].toFixed(coinMeta.szDecimals)),
             limitPx: five(
               parsedLowerPrice +
                 (i * Math.abs(parsedUpperPrice - parsedLowerPrice)) /

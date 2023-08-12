@@ -10,6 +10,7 @@ import {
   Subscription,
   Universe,
   UserState,
+  VaultDetails,
 } from './types';
 import { WebsocketManager } from './websocketmanager';
 
@@ -45,17 +46,28 @@ export class Info extends API {
     }
   }
 
-  public async userState(address: string): Promise<UserState> {
+  public async userState(user: string): Promise<UserState> {
     return await this.post<UserState>('/info', {
       type: 'clearinghouseState',
-      user: address,
+      user,
     });
   }
 
-  public async openOrders(address: string): Promise<OpenOrders> {
+  public async vaultDetails(
+    user: string,
+    vaultAddress: string,
+  ): Promise<VaultDetails> {
+    return await this.post<VaultDetails>('/info', {
+      type: 'vaultDetails',
+      user,
+      vaultAddress,
+    });
+  }
+
+  public async openOrders(user: string): Promise<OpenOrders> {
     return await this.post<OpenOrders>('/info', {
       type: 'openOrders',
-      user: address,
+      user,
     });
   }
 
@@ -65,10 +77,10 @@ export class Info extends API {
     });
   }
 
-  public async userFills(address: string): Promise<Fills> {
+  public async userFills(user: string): Promise<Fills> {
     return await this.post<Fills>('/info', {
       type: 'userFills',
-      user: address,
+      user,
     });
   }
 
