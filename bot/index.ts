@@ -9,16 +9,31 @@ import { five } from '../src/util';
 // Based off of https://github.com/feathers-studio/telegraf-docs/blob/master/examples/keyboard-bot.ts
 
 const bot = new Telegraf(process.env.BOT_TOKEN!);
+const CHAT_ID = process.env.CHAT_ID;
 const info = new Info(MAINNET_API_URL);
 const wallet = new ethers.Wallet(process.env.SECRET_KEY!);
 const vault: string | undefined = process.env.VAULT;
 
-const CONTRACTS_FETCH_INTERVAL = 5000;
+const CONTRACTS_FETCH_INTERVAL = 5000 * 60;
 const NUM_LADDER_ORDERS = 25;
 const DEFAULT_LADDER_RANGE = 10;
 const TOTAL_POSITION_SIZE = 10000;
 
 let contracts: Contract[] | null = null;
+
+async function fetchHlp() {
+  try {
+    const vaultDetails = await info.vaultDetails(undefined, HLP_ADDRESS);
+    const pnl = vaultDetails['portfolio']['day']['pnlHistory'];
+    bot.telegram.sendMessage(
+      CHAT_ID!,
+      `INFO: HLP day pnl ${parseFloat(
+        pnl[pnl.length - 1][1],
+      ).toLocaleString()}$`,
+    );
+  } catch (error) {}
+}
+
 async function fetchContracts() {
   try {
     const response = await axios.get(
@@ -27,10 +42,14 @@ async function fetchContracts() {
     contracts = response.data;
   } catch (error) {}
 }
+
 const startDataFetching = async () => {
-  fetchContracts();
+  await fetchHlp();
+  await fetchContracts();
+
   setInterval(async () => {
     await fetchContracts();
+    await fetchHlp();
   }, CONTRACTS_FETCH_INTERVAL);
 };
 startDataFetching();

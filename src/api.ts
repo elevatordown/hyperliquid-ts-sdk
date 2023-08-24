@@ -54,7 +54,7 @@ export class Info extends API {
   }
 
   public async vaultDetails(
-    user: string,
+    user: string | undefined,
     vaultAddress: string,
   ): Promise<VaultDetails> {
     return await this.post<VaultDetails>('/info', {
