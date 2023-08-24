@@ -1,9 +1,8 @@
-import axios from 'axios';
 import 'dotenv/config';
 import { ethers } from 'ethers';
 import lodash from 'lodash';
 import { Markup, Telegraf } from 'telegraf';
-import { Contract, Exchange, HLP_ADDRESS, Info, MAINNET_API_URL } from '../src';
+import { Exchange, HLP_ADDRESS, Info, MAINNET_API_URL } from '../src';
 import { five } from '../src/util';
 
 // Based off of https://github.com/feathers-studio/telegraf-docs/blob/master/examples/keyboard-bot.ts
@@ -14,12 +13,10 @@ const info = new Info(MAINNET_API_URL);
 const wallet = new ethers.Wallet(process.env.SECRET_KEY!);
 const vault: string | undefined = process.env.VAULT;
 
-const CONTRACTS_FETCH_INTERVAL = 5000 * 60;
+const CONTRACTS_FETCH_INTERVAL = 5 * 60 * 1000;
 const NUM_LADDER_ORDERS = 25;
 const DEFAULT_LADDER_RANGE = 10;
 const TOTAL_POSITION_SIZE = 10000;
-
-let contracts: Contract[] | null = null;
 
 async function fetchHlp() {
   try {
@@ -31,25 +28,58 @@ async function fetchHlp() {
         pnl[pnl.length - 1][1],
       ).toLocaleString()}$`,
     );
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    bot.telegram.sendMessage(CHAT_ID!, error);
+  }
 }
 
-async function fetchContracts() {
+async function fetchMeta() {
   try {
-    const response = await axios.get(
-      'https://api.hyperliquid.xyz/aggregator/v1/contracts',
-    );
-    contracts = response.data;
-  } catch (error) {}
+    const meta = await info.metaAndAssetCtxs();
+    meta[0].universe.forEach((u, i) => {
+      u['change24h'] =
+        ((parseFloat(meta[1][i].markPx) - parseFloat(meta[1][i].prevDayPx)) *
+          100) /
+        parseFloat(meta[1][i].markPx);
+      u['funding24h'] = parseFloat(meta[1][i].funding) * 24 * 100;
+    });
+
+    let log = '';
+    const copy = meta[0].universe.slice();
+    copy.sort((a, b) => Math.abs(b['change24h']) - Math.abs(a['change24h']));
+    copy
+      .slice(0, 4)
+      .forEach(
+        (u) =>
+          (log += `INFO: ${u.name.padStart(6)}, change24h ${u['change24h']
+            .toFixed(2)
+            .padStart(6)}%\n`),
+      );
+    bot.telegram.sendMessage(CHAT_ID!, log);
+
+    log = '';
+    meta[0].universe
+      .sort((a, b) => Math.abs(b['funding24h']) - Math.abs(a['funding24h']))
+      .slice(0, 4)
+      .forEach(
+        (u) =>
+          (log += `INFO: ${u.name.padStart(6)}, funding24h ${u['funding24h']
+            .toFixed(2)
+            .padStart(6)}%\n`),
+      );
+    bot.telegram.sendMessage(CHAT_ID!, log);
+  } catch (error) {
+    console.log(error);
+    bot.telegram.sendMessage(CHAT_ID!, error);
+  }
 }
 
 const startDataFetching = async () => {
-  await fetchHlp();
-  await fetchContracts();
+  await Promise.all([fetchHlp(), fetchMeta()]);
 
   setInterval(async () => {
-    await fetchContracts();
-    await fetchHlp();
+    await Promise.all([fetchHlp(), fetchMeta()]);
   }, CONTRACTS_FETCH_INTERVAL);
 };
 startDataFetching();
@@ -144,29 +174,35 @@ bot.action(/Long.+/, async (ctx) => {
   const parsedUpperPrice = currentMid;
 
   const exchange = await Exchange.create(wallet, MAINNET_API_URL, vault);
-  const r = await exchange.bulkOrders(
-    lodash.range(1, NUM_LADDER_ORDERS + 1).map((i) => {
-      return {
-        coin,
-        isBuy: true,
-        sz: parseFloat(
-          (parsedAmount / NUM_LADDER_ORDERS).toFixed(coinMeta.szDecimals),
-        ),
-        limitPx: five(
-          parsedLowerPrice +
-            (i * Math.abs(parsedUpperPrice - parsedLowerPrice)) /
-              NUM_LADDER_ORDERS,
-        ),
-        orderType: { limit: { tif: 'Gtc' } },
-        reduceOnly: false,
-      };
-    }),
-  );
-  ctx.reply(
-    `LOG: Placed ${NUM_LADDER_ORDERS} LONG orders ${five(
-      parsedLowerPrice,
-    )}$ through ${five(parsedUpperPrice)}$ for ${coin}`,
-  );
+  try {
+    const r = await exchange.bulkOrders(
+      lodash.range(1, NUM_LADDER_ORDERS + 1).map((i) => {
+        return {
+          coin,
+          isBuy: true,
+          sz: parseFloat(
+            (parsedAmount / NUM_LADDER_ORDERS).toFixed(coinMeta.szDecimals),
+          ),
+          limitPx: five(
+            parsedLowerPrice +
+              (i * Math.abs(parsedUpperPrice - parsedLowerPrice)) /
+                NUM_LADDER_ORDERS,
+          ),
+          orderType: { limit: { tif: 'Gtc' } },
+          reduceOnly: false,
+        };
+      }),
+    );
+    console.log(r.response.data.statuses);
+    ctx.reply(
+      `LOG: Placed ${NUM_LADDER_ORDERS} LONG orders ${five(
+        parsedLowerPrice,
+      )}$ through ${five(parsedUpperPrice)}$ for ${coin}`,
+    );
+  } catch (error) {
+    console.log(error);
+    bot.telegram.sendMessage(CHAT_ID!, error);
+  }
 });
 
 bot.action(/Short.+/, async (ctx) => {
@@ -192,29 +228,35 @@ bot.action(/Short.+/, async (ctx) => {
   const parsedUpperPrice = (currentMid * (100 + range)) / 100;
 
   const exchange = await Exchange.create(wallet, MAINNET_API_URL, vault);
-  const r = await exchange.bulkOrders(
-    lodash.range(1, NUM_LADDER_ORDERS + 1).map((i) => {
-      return {
-        coin,
-        isBuy: false,
-        sz: parseFloat(
-          (parsedAmount / NUM_LADDER_ORDERS).toFixed(coinMeta.szDecimals),
-        ),
-        limitPx: five(
-          parsedLowerPrice +
-            (i * Math.abs(parsedUpperPrice - parsedLowerPrice)) /
-              NUM_LADDER_ORDERS,
-        ),
-        orderType: { limit: { tif: 'Gtc' } },
-        reduceOnly: false,
-      };
-    }),
-  );
-  ctx.reply(
-    `LOG: Placed 25 SHORT orders ${five(parsedLowerPrice)}$ through ${five(
-      parsedUpperPrice,
-    )}$ for ${coin}`,
-  );
+  try {
+    const r = await exchange.bulkOrders(
+      lodash.range(1, NUM_LADDER_ORDERS + 1).map((i) => {
+        return {
+          coin,
+          isBuy: false,
+          sz: parseFloat(
+            (parsedAmount / NUM_LADDER_ORDERS).toFixed(coinMeta.szDecimals),
+          ),
+          limitPx: five(
+            parsedLowerPrice +
+              (i * Math.abs(parsedUpperPrice - parsedLowerPrice)) /
+                NUM_LADDER_ORDERS,
+          ),
+          orderType: { limit: { tif: 'Gtc' } },
+          reduceOnly: false,
+        };
+      }),
+    );
+    console.log(r.response.data.statuses);
+    ctx.reply(
+      `LOG: Placed 25 SHORT orders ${five(parsedLowerPrice)}$ through ${five(
+        parsedUpperPrice,
+      )}$ for ${coin}`,
+    );
+  } catch (error) {
+    console.log(error);
+    bot.telegram.sendMessage(CHAT_ID!, error);
+  }
 });
 
 bot.command('account', async (ctx) => {
@@ -309,21 +351,27 @@ bot.action(/Close.+/, async (ctx) => {
   let coinMeta = meta.universe.filter((u) => u.name == coin)[0];
 
   const exchange = await Exchange.create(wallet, MAINNET_API_URL, vault);
-  const r = await exchange.bulkOrders([
-    {
-      coin: coin,
-      isBuy: currentSide == 'sell',
-      sz: Math.abs(parseFloat(closePosition.toFixed(coinMeta.szDecimals))),
-      limitPx: five(currentMid),
-      orderType: { limit: { tif: 'Gtc' } },
-      reduceOnly: true,
-    },
-  ]);
-  ctx.reply(
-    `LOG: Placed a close order at ${five(
-      currentMid,
-    )}$ for ${closePosition.toFixed(coinMeta.szDecimals)} ${coin}`,
-  );
+  try {
+    const r = await exchange.bulkOrders([
+      {
+        coin: coin,
+        isBuy: currentSide == 'sell',
+        sz: Math.abs(parseFloat(closePosition.toFixed(coinMeta.szDecimals))),
+        limitPx: five(currentMid),
+        orderType: { limit: { tif: 'Gtc' } },
+        reduceOnly: true,
+      },
+    ]);
+    ctx.reply(
+      `LOG: Placed a close order at ${five(
+        currentMid,
+      )}$ for ${closePosition.toFixed(coinMeta.szDecimals)} ${coin}`,
+    );
+    console.log(r.response.data.statuses);
+  } catch (error) {
+    console.log(error);
+    bot.telegram.sendMessage(CHAT_ID!, error);
+  }
 });
 
 bot.command('openorders', async (ctx) => {
@@ -387,10 +435,16 @@ bot.action(/Cancel.+/, async (ctx) => {
   const cancelRequests = oos.map((oo) => {
     return { coin: oo.coin, oid: oo.oid };
   });
-  if (oos.length) {
-    const r = await exchange.bulkCancel(cancelRequests);
+  try {
+    if (oos.length) {
+      const r = await exchange.bulkCancel(cancelRequests);
+      console.log(r);
+    }
+    ctx.reply(`LOG: Cancelled ${oos.length} ${sideToCancel} orders on ${coin}`);
+  } catch (error) {
+    console.log(error);
+    bot.telegram.sendMessage(CHAT_ID!, error);
   }
-  ctx.reply(`LOG: Cancelled ${oos.length} ${sideToCancel} orders on ${coin}`);
 });
 
 // Useful for debugging what actions are unmatched
@@ -400,5 +454,11 @@ bot.action(/Cancel.+/, async (ctx) => {
 
 bot.launch();
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once('SIGINT', () => {
+  bot.stop('SIGINT');
+  process.exit();
+});
+process.once('SIGTERM', () => {
+  bot.stop('SIGTERM');
+  process.exit();
+});

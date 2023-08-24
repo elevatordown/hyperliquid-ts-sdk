@@ -6,6 +6,7 @@ import {
   Fills,
   FundingHistory,
   L2Snapshot,
+  MarketData,
   OpenOrders,
   Subscription,
   Universe,
@@ -61,6 +62,12 @@ export class Info extends API {
       type: 'vaultDetails',
       user,
       vaultAddress,
+    });
+  }
+
+  public async metaAndAssetCtxs(): Promise<[Universe, MarketData]> {
+    return await this.post<[Universe, MarketData]>('/info', {
+      type: 'metaAndAssetCtxs',
     });
   }
 

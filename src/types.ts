@@ -65,14 +65,6 @@ type Fill = {
 
 export type Fills = Fill[];
 
-export type UniverseItem = {
-  maxLeverage: number;
-  name: string;
-  szDecimals: number;
-};
-
-export type Universe = { universe: UniverseItem[] };
-
 export type Funding = {
   coin: 'BTC';
   fundingRate: string;
@@ -280,3 +272,28 @@ export interface Contract {
   contract_type: string;
   contract_price_currency: string;
 }
+
+export interface UniverseItem {
+  maxLeverage: number;
+  name: string;
+  onlyIsolated: boolean;
+  szDecimals: number;
+}
+
+export type Universe = {
+  universe: UniverseItem[];
+};
+
+export interface MarketDataItem {
+  dayNtlVlm: string;
+  funding: string;
+  impactPxs: string[];
+  markPx: string;
+  midPx: string;
+  openInterest: string;
+  oraclePx: string;
+  premium: string;
+  prevDayPx: string;
+}
+
+export type MarketData = MarketDataItem[];
