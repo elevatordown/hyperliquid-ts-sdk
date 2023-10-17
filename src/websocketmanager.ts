@@ -138,18 +138,7 @@ export class WebsocketManager {
   }
 
   private subscriptionToIdentifier(subscription: Subscription): string {
-    if (subscription.type === 'allMids') {
-      return 'allMids';
-    } else if (subscription.type === 'l2Book') {
-      return `l2Book:${subscription.coin.toLowerCase()}`;
-    } else if (subscription.type === 'trades') {
-      return `trades:${subscription.coin.toLowerCase()}`;
-    } else if (subscription.type === 'userEvents') {
-      return 'userEvents';
-    } else if (subscription.type === 'webData') {
-      return 'webData';
-    }
-    throw new Error('Unknown subscription type');
+    return subscription.type;
   }
 
   private wsMsgToIdentifier(wsMsg: WsMsg): string | null {
