@@ -120,11 +120,17 @@ export type UserEventsSubscription = {
   user: string;
 };
 
+export type WebData = {
+  type: 'userEvents';
+  user: string;
+};
+
 export type Subscription =
   | AllMidsSubscription
   | L2BookSubscription
   | TradesSubscription
-  | UserEventsSubscription;
+  | UserEventsSubscription
+  | WebData;
 
 type Channel = {
   channel: string;

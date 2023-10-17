@@ -146,6 +146,8 @@ export class WebsocketManager {
       return `trades:${subscription.coin.toLowerCase()}`;
     } else if (subscription.type === 'userEvents') {
       return 'userEvents';
+    } else if (subscription.type === 'webData') {
+      return 'webData';
     }
     throw new Error('Unknown subscription type');
   }
