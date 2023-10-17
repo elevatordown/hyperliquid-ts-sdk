@@ -15,6 +15,9 @@ function orderTypeToTuple(orderType) {
         else if (tif === 'Ioc') {
             return [3, 0];
         }
+        else if (tif === 'FrontendMarket') {
+            return [8, 0];
+        }
     }
     else if (orderType.trigger) {
         const trigger = orderType.trigger;
