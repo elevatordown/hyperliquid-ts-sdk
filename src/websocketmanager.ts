@@ -1,4 +1,3 @@
-import WebSocket from 'ws';
 import { Subscription, WsMsg } from './types';
 
 type ActiveSubscription = {
