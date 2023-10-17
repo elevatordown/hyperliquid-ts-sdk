@@ -121,7 +121,7 @@ export type UserEventsSubscription = {
 };
 
 export type WebData = {
-  type: 'userEvents';
+  type: 'webData';
   user: string;
 };
 
