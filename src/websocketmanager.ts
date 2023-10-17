@@ -158,6 +158,6 @@ export class WebsocketManager {
     } else if (wsMsg['channel'] === 'subscriptionResponse') {
       return 'subscriptionResponse';
     }
-    throw new Error('Unknown channel type');
+    return wsMsg['channel'];
   }
 }
