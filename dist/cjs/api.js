@@ -5,15 +5,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Info = exports.API = void 0;
 const axios_1 = __importDefault(require("axios"));
+const http_1 = __importDefault(require("http"));
+const https_1 = __importDefault(require("https"));
 const websocketmanager_1 = require("./websocketmanager");
 class API {
     baseUrl;
+    httpAgent;
+    httpsAgent;
     constructor(baseUrl) {
         this.baseUrl = baseUrl;
+        this.httpAgent = new http_1.default.Agent({ keepAlive: true });
+        this.httpsAgent = new https_1.default.Agent({ keepAlive: true });
     }
     async post(urlPath, payload = {}) {
         try {
-            const response = await axios_1.default.post(this.baseUrl + urlPath, payload);
+            const response = await axios_1.default.post(this.baseUrl + urlPath, payload, {
+                httpAgent: this.httpAgent,
+                httpsAgent: this.httpsAgent,
+            });
             return response.data;
         }
         catch (error) {
@@ -31,16 +40,28 @@ class Info extends API {
             this.wsManager = new websocketmanager_1.WebsocketManager(this.baseUrl);
         }
     }
-    async userState(address) {
+    async userState(user) {
         return await this.post('/info', {
             type: 'clearinghouseState',
-            user: address,
+            user,
         });
     }
-    async openOrders(address) {
+    async vaultDetails(user, vaultAddress) {
+        return await this.post('/info', {
+            type: 'vaultDetails',
+            user,
+            vaultAddress,
+        });
+    }
+    async metaAndAssetCtxs() {
+        return await this.post('/info', {
+            type: 'metaAndAssetCtxs',
+        });
+    }
+    async openOrders(user) {
         return await this.post('/info', {
             type: 'openOrders',
-            user: address,
+            user,
         });
     }
     async allMids() {
@@ -48,10 +69,10 @@ class Info extends API {
             type: 'allMids',
         });
     }
-    async userFills(address) {
+    async userFills(user) {
         return await this.post('/info', {
             type: 'userFills',
-            user: address,
+            user,
         });
     }
     async meta() {

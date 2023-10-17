@@ -36,7 +36,9 @@ export type OpenOrder = {
     coin: string;
     limitPx: string;
     oid: number;
-    side: 'A';
+    origSz: string;
+    reduceOnly: boolean;
+    side: 'A' | 'B';
     sz: string;
     timestamp: number;
 };
@@ -50,20 +52,12 @@ type Fill = {
     hash: string;
     oid: number;
     px: string;
-    side: 'A';
+    side: 'A' | 'B';
     startPosition: string;
     sz: string;
     time: number;
 };
 export type Fills = Fill[];
-export type UniverseItem = {
-    maxLeverage: number;
-    name: string;
-    szDecimals: number;
-};
-export type Universe = {
-    universe: UniverseItem[];
-};
 export type Funding = {
     coin: 'BTC';
     fundingRate: string;
@@ -202,5 +196,60 @@ export interface ApiResponse {
         };
     };
 }
+export interface FollowerState {
+    allTimePnl: string;
+    daysFollowing: number;
+    lockupUntil: number;
+    pnl: string;
+    user: string;
+    vaultEntryTime: number;
+    vaultEquity: string;
+}
+export interface VaultDetails {
+    ageInDays: number;
+    allowDeposits: boolean;
+    apr: number;
+    description: string;
+    followerState: FollowerState;
+}
+export interface Contract {
+    ticker_id: string;
+    base_currency: string;
+    quote_currency: string;
+    last_price: string;
+    base_volume: string;
+    quote_volume: string;
+    product_type: string;
+    open_interest: string;
+    index_price: string;
+    index_name: string;
+    index_currency: string;
+    funding_rate: string;
+    next_funding_rate: string;
+    next_funding_rate_timestamp: string;
+    contract_type: string;
+    contract_price_currency: string;
+}
+export interface UniverseItem {
+    maxLeverage: number;
+    name: string;
+    onlyIsolated: boolean;
+    szDecimals: number;
+}
+export type Universe = {
+    universe: UniverseItem[];
+};
+export interface MarketDataItem {
+    dayNtlVlm: string;
+    funding: string;
+    impactPxs: string[];
+    markPx: string;
+    midPx: string;
+    openInterest: string;
+    oraclePx: string;
+    premium: string;
+    prevDayPx: string;
+}
+export type MarketData = MarketDataItem[];
 export {};
 //# sourceMappingURL=types.d.ts.map

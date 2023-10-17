@@ -1,13 +1,22 @@
 import axios from 'axios';
+import http from 'http';
+import https from 'https';
 import { WebsocketManager } from './websocketmanager';
 export class API {
     baseUrl;
+    httpAgent;
+    httpsAgent;
     constructor(baseUrl) {
         this.baseUrl = baseUrl;
+        this.httpAgent = new http.Agent({ keepAlive: true });
+        this.httpsAgent = new https.Agent({ keepAlive: true });
     }
     async post(urlPath, payload = {}) {
         try {
-            const response = await axios.post(this.baseUrl + urlPath, payload);
+            const response = await axios.post(this.baseUrl + urlPath, payload, {
+                httpAgent: this.httpAgent,
+                httpsAgent: this.httpsAgent,
+            });
             return response.data;
         }
         catch (error) {
@@ -24,16 +33,28 @@ export class Info extends API {
             this.wsManager = new WebsocketManager(this.baseUrl);
         }
     }
-    async userState(address) {
+    async userState(user) {
         return await this.post('/info', {
             type: 'clearinghouseState',
-            user: address,
+            user,
         });
     }
-    async openOrders(address) {
+    async vaultDetails(user, vaultAddress) {
+        return await this.post('/info', {
+            type: 'vaultDetails',
+            user,
+            vaultAddress,
+        });
+    }
+    async metaAndAssetCtxs() {
+        return await this.post('/info', {
+            type: 'metaAndAssetCtxs',
+        });
+    }
+    async openOrders(user) {
         return await this.post('/info', {
             type: 'openOrders',
-            user: address,
+            user,
         });
     }
     async allMids() {
@@ -41,10 +62,10 @@ export class Info extends API {
             type: 'allMids',
         });
     }
-    async userFills(address) {
+    async userFills(user) {
         return await this.post('/info', {
             type: 'userFills',
-            user: address,
+            user,
         });
     }
     async meta() {

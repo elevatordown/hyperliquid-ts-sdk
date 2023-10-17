@@ -1,10 +1,6 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebsocketManager = void 0;
-const ws_1 = __importDefault(require("ws"));
 class WebsocketManager {
     subscription_id_counter;
     wsReady;
@@ -18,7 +14,7 @@ class WebsocketManager {
         this.queuedSubscriptions = [];
         this.activeSubscriptions = {};
         const wsUrl = `ws${base_url.slice('http'.length)}/ws`;
-        this.socket = new ws_1.default(wsUrl);
+        this.socket = new WebSocket(wsUrl);
         this.debug = debug;
         this.socket.onopen = () => {
             if (this.debug) {

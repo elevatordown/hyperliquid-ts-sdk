@@ -3,3 +3,4 @@ export * from './constants';
 export * from './exchange';
 export * from './signing';
 export * from './types';
+export * from './util';

@@ -19,3 +19,4 @@ __exportStar(require("./constants"), exports);
 __exportStar(require("./exchange"), exports);
 __exportStar(require("./signing"), exports);
 __exportStar(require("./types"), exports);
+__exportStar(require("./util"), exports);

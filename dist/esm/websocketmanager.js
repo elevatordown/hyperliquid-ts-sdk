@@ -1,4 +1,3 @@
-import WebSocket from 'ws';
 export class WebsocketManager {
     subscription_id_counter;
     wsReady;
