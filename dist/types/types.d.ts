@@ -142,7 +142,7 @@ export type UserEventsMsg = {
     data: UserEventsData;
 } & Channel;
 export type WsMsg = AllMidsMsg | L2BookMsg | TradesMsg | UserEventsMsg;
-export type Tif = 'Alo' | 'Ioc' | 'Gtc';
+export type Tif = 'Alo' | 'Ioc' | 'Gtc' | 'FrontendMarket';
 export type Tpsl = 'tp' | 'sl';
 export interface LimitOrderType {
     tif: Tif;
